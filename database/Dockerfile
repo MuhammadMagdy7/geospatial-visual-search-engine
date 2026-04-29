@@ -1,5 +1,6 @@
-FROM pgvector/pgvector:pg16
+# Pre-built image with PostgreSQL + PostGIS + pgvector
+# Avoids apt-get dependency issues in restricted networks
+FROM ghcr.io/payloadcms/postgis-vector:latest
 
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/*.list 2>/dev/null || true && \
-    apt-get update && apt-get install -y postgresql-16-postgis-3 \
-    && rm -rf /var/lib/apt/lists/*
+# Copy init script (will run on first container start)
+COPY init.sql /docker-entrypoint-initdb.d/init.sql

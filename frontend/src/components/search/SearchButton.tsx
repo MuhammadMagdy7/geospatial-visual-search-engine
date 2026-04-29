@@ -4,11 +4,16 @@ import { useMapStore } from '../../stores/mapStore'
 import { useSearch } from '../../hooks/useSearch'
 
 const SearchButton = () => {
-  const { queryImage, isSearching } = useSearchStore()
+  const { searchMode, queryImage, queryText, isSearching } = useSearchStore()
   const { selectedBBox } = useMapStore()
   const { mutate: performSearch } = useSearch()
 
-  const isDisabled = !queryImage || !selectedBBox || isSearching
+  const canSearch = 
+    selectedBBox && 
+    !isSearching && 
+    (searchMode === 'image' ? !!queryImage : !!queryText.trim());
+
+  const isDisabled = !canSearch;
 
   return (
     <button

@@ -4,28 +4,62 @@ import { useSearchStore } from '../stores/searchStore';
 import { useMapStore } from '../stores/mapStore';
 
 export const useSearch = () => {
-  const { setResults, setSearching, queryImage, settings } = useSearchStore();
+  const {
+    searchMode,
+    queryImage,
+    queryText,
+    settings,
+    setResults,
+    setSearching,
+  } = useSearchStore();
   const { selectedBBox } = useMapStore();
 
   return useMutation({
     mutationFn: async () => {
-      if (!queryImage || !selectedBBox) {
-        throw new Error('Image and region selection are required');
+      if (!selectedBBox) {
+        throw new Error('Please select a region on the map first.');
       }
+
+      if (searchMode === 'image' && !queryImage) {
+        throw new Error('Please upload a query image.');
+      }
+
+      if (searchMode === 'text' && !queryText.trim()) {
+        throw new Error('Please enter a search description.');
+      }
+
       setSearching(true);
-      return searchAPI.search(
-        queryImage,
-        selectedBBox,
-        settings.threshold,
-        10 // topK
-      );
+
+      if (searchMode === 'image' && queryImage) {
+        return searchAPI.searchByImage(
+          queryImage,
+          selectedBBox,
+          settings.threshold,
+          10,
+          settings.tileSize,
+        );
+      } else {
+        return searchAPI.searchByText(
+          queryText.trim(),
+          selectedBBox,
+          settings.threshold,
+          10,
+          settings.tileSize,
+        );
+      }
     },
     onSuccess: (data) => {
-      setResults(data.results, data.search_time_ms);
+      setResults(
+        data.results,
+        data.search_time_ms,
+        data.tiles_processed,
+        data.tiles_from_cache,
+        data.query_type,
+      );
       setSearching(false);
     },
     onError: () => {
       setSearching(false);
-    }
+    },
   });
 };

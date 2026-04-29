@@ -1,7 +1,10 @@
 import { useSearchStore } from '../../stores/searchStore'
 
 const SearchSettings = () => {
-  const { settings, setSettings } = useSearchStore()
+  const { settings, setSettings, searchMode } = useSearchStore()
+
+  const minThreshold = searchMode === 'text' ? 0.10 : 0.30;
+  const maxThreshold = searchMode === 'text' ? 0.50 : 0.95;
 
   return (
     <div className="space-y-4">
@@ -12,9 +15,9 @@ const SearchSettings = () => {
         </div>
         <input 
           type="range" 
-          min="0.1" 
-          max="1.0" 
-          step="0.05"
+          min={minThreshold} 
+          max={maxThreshold} 
+          step="0.01"
           value={settings.threshold}
           onChange={(e) => setSettings({ threshold: parseFloat(e.target.value) })}
           className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"

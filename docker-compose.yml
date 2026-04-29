@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgis/postgis:16-3.4
+    build: ./database
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-gvs_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gvs_password_2024}
@@ -9,7 +9,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gvs_user}"]
       interval: 5s
@@ -24,11 +23,15 @@ services:
       BACKEND_HOST: 0.0.0.0
       BACKEND_PORT: 8000
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      HF_HOME: /data/hf_cache
+      TRANSFORMERS_OFFLINE: ${TRANSFORMERS_OFFLINE:-1}
+      MODEL_DEVICE: ${MODEL_DEVICE:-cpu}
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
       - backend_cache:/data/cache
+      - hf_cache:/data/hf_cache
     depends_on:
       db:
         condition: service_healthy
@@ -50,3 +53,4 @@ services:
 volumes:
   postgres_data:
   backend_cache:
+  hf_cache:

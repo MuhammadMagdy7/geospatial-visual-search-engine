@@ -1,39 +1,78 @@
+"""Alembic environment configuration.
+
+Uses sync psycopg driver for migrations (Alembic doesn't natively support async).
+The DATABASE_URL from settings is converted from asyncpg to psycopg automatically.
+"""
+
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+from geoalchemy2 import Geometry  # noqa: F401  -- needed for autogenerate
+from pgvector.sqlalchemy import Vector  # noqa: F401  -- needed for autogenerate
+
+from app.config import settings
 from app.database import Base
-from app.models import tile, search_result, region
+
+# Import all models so Alembic can detect them
+from app.models import tile, region, search_result  # noqa: F401
 
 config = context.config
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
+
+def get_sync_url() -> str:
+    """Convert the asyncpg URL to a sync psycopg URL for Alembic."""
+    url = settings.DATABASE_URL
+    # asyncpg -> psycopg
+    if "+asyncpg" in url:
+        url = url.replace("+asyncpg", "+psycopg")
+    return url
+
+
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    """Run migrations in 'offline' mode (generates SQL without DB connection)."""
     context.configure(
-        url=url,
+        url=get_sync_url(),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        # Tell Alembic about PostGIS / pgvector types so it doesn't try to 
+        # generate migrations for them
+        include_object=lambda obj, name, type_, reflected, compare_to: not (
+            type_ == "table" and name in {"spatial_ref_sys"}
+        ),
     )
     with context.begin_transaction():
         context.run_migrations()
 
+
 def run_migrations_online() -> None:
+    """Run migrations in 'online' mode (requires live DB connection)."""
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = get_sync_url()
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=lambda obj, name, type_, reflected, compare_to: not (
+                type_ == "table" and name in {"spatial_ref_sys"}
+            ),
         )
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

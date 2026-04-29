@@ -1,15 +1,20 @@
 import ImageUpload from '../search/ImageUpload'
+import TextSearch from '../search/TextSearch'
+import SearchModeToggle from '../search/SearchModeToggle'
 import SearchSettings from '../search/SearchSettings'
 import SearchButton from '../search/SearchButton'
 import ResultsList from '../results/ResultsList'
+import { useSearchStore } from '../../stores/searchStore'
 
 const Sidebar = () => {
+  const { searchMode } = useSearchStore()
+
   return (
     <aside className="w-[320px] border-r flex flex-col overflow-hidden bg-card">
       <div className="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
         <section>
-          <h2 className="text-sm font-semibold mb-3 uppercase tracking-wider text-muted-foreground">Query Image</h2>
-          <ImageUpload />
+          <SearchModeToggle />
+          {searchMode === 'image' ? <ImageUpload /> : <TextSearch />}
         </section>
         
         <section>
