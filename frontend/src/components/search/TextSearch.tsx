@@ -14,7 +14,7 @@ const TextSearch: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-gray-300">
         Describe what you're looking for
       </label>
       <textarea
@@ -22,19 +22,20 @@ const TextSearch: React.FC = () => {
         onChange={(e) => setQueryText(e.target.value)}
         placeholder="e.g., airplane on runway"
         rows={3}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg 
+        className="w-full px-3 py-2 border border-gray-600 rounded-lg 
                    focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-                   resize-none text-sm"
+                   resize-none text-sm bg-gray-800 text-white 
+                   placeholder-gray-400"
       />
       <div className="space-y-1">
-        <p className="text-xs text-gray-500">Try an example:</p>
+        <p className="text-xs text-gray-400">Try an example:</p>
         <div className="flex flex-wrap gap-1">
           {exampleQueries.map((q) => (
             <button
               key={q}
               onClick={() => setQueryText(q)}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 
-                         rounded-full text-gray-600 transition-colors"
+              className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 
+                         rounded-full text-gray-300 transition-colors"
             >
               {q}
             </button>

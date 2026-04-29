@@ -12,20 +12,10 @@ def bbox_to_tile_centers(
 ) -> List[dict]:
     """
     Given a bounding box, compute a grid of tile centers within it.
-    
-    The approach:
-    1. Fetch one large satellite image covering the bbox (from Google Maps).
-    2. Split it into tile_size_px × tile_size_px tiles with overlap.
-    3. Convert each tile's pixel position back to lat/lon coordinates.
 
-    Args:
-        bbox: [[lat1, lon1], [lat2, lon2], ...] defining the search region.
-        tile_size_px: Size of each tile in pixels.
-        image_size_px: Size of the fetched satellite image (scale=2 → 1280).
-        zoom: Google Maps zoom level.
-
-    Returns:
-        List of dicts: [{x, y, center_lat, center_lon, tile_size}, ...]
+    IMPORTANT: Only returns tiles whose centers fall INSIDE the user's bbox.
+    The satellite image may cover a larger area than the bbox, but we clip
+    the tile grid to the bbox boundaries.
     """
     lats = [p[0] for p in bbox]
     lons = [p[1] for p in bbox]
@@ -36,12 +26,12 @@ def bbox_to_tile_centers(
     center_lon = (min_lon + max_lon) / 2
 
     # Compute meters-per-pixel at this zoom level
-    # At zoom z, one pixel ≈ 156543.03 * cos(lat) / 2^z meters (at scale=1)
+    # At zoom z, one pixel = 156543.03 * cos(lat) / 2^z meters (at scale=1)
     # With scale=2, each pixel covers half that distance
     meters_per_pixel = 156543.03 * math.cos(math.radians(center_lat)) / (2 ** zoom) / 2
 
     # How many degrees per pixel
-    lat_per_pixel = meters_per_pixel / 111320  # 1 degree lat ≈ 111320 meters
+    lat_per_pixel = meters_per_pixel / 111320
     lon_per_pixel = meters_per_pixel / (111320 * math.cos(math.radians(center_lat)))
 
     # Generate tile grid with 25% overlap
@@ -53,19 +43,21 @@ def bbox_to_tile_centers(
         for x in range(0, image_size_px - tile_size_px + 1, step):
             # Center of this tile in pixel coordinates (relative to image center)
             tile_center_x = x + tile_size_px / 2 - image_size_px / 2
-            tile_center_y = -(y + tile_size_px / 2 - image_size_px / 2)  # y-axis inverted
+            tile_center_y = -(y + tile_size_px / 2 - image_size_px / 2)
 
             # Convert pixel offset to geographic coordinates
             tile_lat = center_lat + tile_center_y * lat_per_pixel
             tile_lon = center_lon + tile_center_x * lon_per_pixel
 
-            tiles.append({
-                "x": x,
-                "y": y,
-                "center_lat": tile_lat,
-                "center_lon": tile_lon,
-                "tile_size": tile_size_px,
-            })
+            # CRITICAL FIX: Only include tiles whose center is INSIDE the bbox
+            if min_lat <= tile_lat <= max_lat and min_lon <= tile_lon <= max_lon:
+                tiles.append({
+                    "x": x,
+                    "y": y,
+                    "center_lat": tile_lat,
+                    "center_lon": tile_lon,
+                    "tile_size": tile_size_px,
+                })
 
     return tiles
 

@@ -4,18 +4,17 @@ import { useSearchStore } from '../stores/searchStore';
 import { useMapStore } from '../stores/mapStore';
 
 export const useSearch = () => {
-  const {
-    searchMode,
-    queryImage,
-    queryText,
-    settings,
-    setResults,
-    setSearching,
-  } = useSearchStore();
-  const { selectedBBox } = useMapStore();
+  const setResults = useSearchStore((s) => s.setResults);
+  const setSearching = useSearchStore((s) => s.setSearching);
 
   return useMutation({
     mutationFn: async () => {
+      // Read FRESH state inside the mutationFn to avoid stale closures.
+      // Zustand's getState() always returns the latest snapshot.
+      const { searchMode, queryImage, queryText, settings } =
+        useSearchStore.getState();
+      const { selectedBBox } = useMapStore.getState();
+
       if (!selectedBBox) {
         throw new Error('Please select a region on the map first.');
       }
