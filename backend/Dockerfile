@@ -7,6 +7,8 @@ WORKDIR /app
 # system compilation. If you ever need to add a package that requires compilation
 # from source, you may need to switch to `python:3.11` (full image) which includes
 # build tools, OR install build-essential via apt-get if your network allows it.
+# NOTE: opencv-python-headless is used instead of opencv-python to avoid
+# needing system-level libgl1/libglib2.0 (which would require apt-get).
 
 # Install Python dependencies
 # Use CPU-only torch wheels to keep image small (~700 MB instead of ~3 GB)
@@ -15,7 +17,11 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir \
         torch==2.2.0 torchvision==0.17.0 \
         --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip uninstall -y opencv-python 2>/dev/null; \
+       pip install --no-cache-dir --force-reinstall --no-deps \
+        opencv-python-headless==4.10.0.84 \
+    && pip install --no-cache-dir numpy==1.26.4
 
 # Create cache directories for HuggingFace and tile storage
 RUN mkdir -p /data/hf_cache /data/cache

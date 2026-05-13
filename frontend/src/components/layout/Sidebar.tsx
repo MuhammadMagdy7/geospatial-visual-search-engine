@@ -14,7 +14,14 @@ const Sidebar = () => {
       <div className="p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
         <section>
           <SearchModeToggle />
-          {searchMode === 'image' ? <ImageUpload /> : <TextSearch />}
+          {searchMode === 'ai_detection' && (
+            <div className="text-xs text-muted-foreground bg-secondary/30 rounded-md p-3 border border-border">
+              <p className="font-medium text-foreground mb-1">🎯 AI Detection Mode</p>
+              <p>Select an object class below and draw a region on the map. YOLOv8 will detect objects automatically.</p>
+            </div>
+          )}
+          {searchMode === 'visual_similarity' && <ImageUpload />}
+          {searchMode === 'text_search' && <TextSearch />}
         </section>
         
         <section>

@@ -13,6 +13,7 @@ class SearchResult(BaseModel):
     google_maps_link: str
     tile_x: Optional[int] = None
     tile_y: Optional[int] = None
+    detected_class: Optional[str] = None  # Populated in AI Detection mode
 
 
 class SearchResponse(BaseModel):
@@ -22,3 +23,5 @@ class SearchResponse(BaseModel):
     tiles_processed: int = 0
     tiles_from_cache: int = 0
     query_type: str = "image"
+    search_mode: str = "ai_detection"
+    warnings: List[str] = []
